@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FFmpeg Server Tools</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-video"></i> FFmpeg Server Tools</h1>
+            <p>Complete media processing toolkit</p>
+        </header>
+
+        <nav class="tab-nav">
+            <button class="tab-btn active" data-tab="upload">
+                <i class="fas fa-upload"></i> Upload
+            </button>
+            <button class="tab-btn" data-tab="convert">
+                <i class="fas fa-exchange-alt"></i> Convert
+            </button>
+            <button class="tab-btn" data-tab="edit">
+                <i class="fas fa-cut"></i> Edit
+            </button>
+            <button class="tab-btn" data-tab="info">
+                <i class="fas fa-info-circle"></i> Info
+            </button>
+            <button class="tab-btn" data-tab="jobs">
+                <i class="fas fa-tasks"></i> Jobs
+            </button>
+        </nav>
+
+        <!-- Upload Tab -->
+        <div class="tab-content active" id="upload">
+            <div class="upload-area" id="uploadArea">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <h3>Drop files here or click to browse</h3>
+                <p>Supported formats: MP4, AVI, MOV, WMV, FLV, WebM, MKV, MP3, WAV, AAC, FLAC, OGG</p>
+                <input type="file" id="fileInput" accept="video/*,audio/*" multiple hidden>
+            </div>
+            
+            <div class="file-list" id="uploadedFiles">
+                <h3>Uploaded Files</h3>
+                <div id="filesList"></div>
+            </div>
+        </div>
+
+        <!-- Convert Tab -->
+        <div class="tab-content" id="convert">
+            <div class="form-section">
+                <h3>Media Conversion</h3>
+                <form id="convertForm">
+                    <div class="form-group">
+                        <label for="inputFileSelect">Input File:</label>
+                        <select id="inputFileSelect" required>
+                            <option value="">Select a file...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="outputFormat">Output Format:</label>
+                        <select id="outputFormat" required>
+                            <option value="">Select format...</option>
+                            <option value="mp4">MP4</option>
+                            <option value="avi">AVI</option>
+                            <option value="mov">MOV</option>
+                            <option value="webm">WebM</option>
+                            <option value="mkv">MKV</option>
+                            <option value="mp3">MP3</option>
+                            <option value="wav">WAV</option>
+                            <option value="aac">AAC</option>
+                            <option value="flac">FLAC</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="videoCodec">Video Codec:</label>
+                            <select id="videoCodec">
+                                <option value="">Auto</option>
+                                <option value="libx264">H.264</option>
+                                <option value="libx265">H.265</option>
+                                <option value="libvpx">VP8</option>
+                                <option value="libvpx-vp9">VP9</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="audioCodec">Audio Codec:</label>
+                            <select id="audioCodec">
+                                <option value="">Auto</option>
+                                <option value="aac">AAC</option>
+                                <option value="mp3">MP3</option>
+                                <option value="libvorbis">Vorbis</option>
+                                <option value="flac">FLAC</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="videoBitrate">Video Bitrate:</label>
+                            <input type="text" id="videoBitrate" placeholder="e.g., 1000k">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="audioBitrate">Audio Bitrate:</label>
+                            <input type="text" id="audioBitrate" placeholder="e.g., 128k">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="resolution">Resolution:</label>
+                        <select id="resolution">
+                            <option value="">Keep original</option>
+                            <option value="1920x1080">1920x1080 (1080p)</option>
+                            <option value="1280x720">1280x720 (720p)</option>
+                            <option value="854x480">854x480 (480p)</option>
+                            <option value="640x360">640x360 (360p)</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-play"></i> Start Conversion
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Edit Tab -->
+        <div class="tab-content" id="edit">
+            <div class="form-section">
+                <h3>Video Editing</h3>
+                
+                <!-- Trim Section -->
+                <div class="edit-section">
+                    <h4><i class="fas fa-cut"></i> Trim Video</h4>
+                    <form id="trimForm">
+                        <div class="form-group">
+                            <label for="trimInputFile">Input File:</label>
+                            <select id="trimInputFile" required>
+                                <option value="">Select a file...</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="startTime">Start Time (HH:MM:SS):</label>
+                                <input type="text" id="startTime" placeholder="00:00:30" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="duration">Duration (HH:MM:SS):</label>
+                                <input type="text" id="duration" placeholder="00:01:00" required>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-cut"></i> Trim Video
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Merge Section -->
+                <div class="edit-section">
+                    <h4><i class="fas fa-layer-group"></i> Merge Videos</h4>
+                    <form id="mergeForm">
+                        <div class="form-group">
+                            <label>Select Files to Merge:</label>
+                            <div id="mergeFilesList" class="checkbox-list">
+                                <!-- Files will be populated here -->
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-layer-group"></i> Merge Videos
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Tab -->
+        <div class="tab-content" id="info">
+            <div class="form-section">
+                <h3>Media Information</h3>
+                <div class="form-group">
+                    <label for="infoFileSelect">Select File:</label>
+                    <select id="infoFileSelect">
+                        <option value="">Select a file...</option>
+                    </select>
+                </div>
+                <button id="getInfoBtn" class="btn btn-primary">
+                    <i class="fas fa-info-circle"></i> Get Media Info
+                </button>
+                
+                <div id="mediaInfo" class="info-display"></div>
+            </div>
+        </div>
+
+        <!-- Jobs Tab -->
+        <div class="tab-content" id="jobs">
+            <div class="jobs-section">
+                <h3>Processing Jobs</h3>
+                <button id="refreshJobsBtn" class="btn btn-secondary">
+                    <i class="fas fa-sync"></i> Refresh
+                </button>
+                <div id="jobsList" class="jobs-list"></div>
+            </div>
+        </div>
+
+        <!-- Progress Modal -->
+        <div id="progressModal" class="modal">
+            <div class="modal-content">
+                <h3>Processing...</h3>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div id="progressText">0%</div>
+                <div id="progressStatus">Starting...</div>
+            </div>
+        </div>
+
+        <!-- Toast Notifications -->
+        <div id="toastContainer" class="toast-container"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
