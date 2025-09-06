@@ -24,6 +24,9 @@
             <button class="tab-btn" data-tab="edit">
                 <i class="fas fa-cut"></i> Edit
             </button>
+            <button class="tab-btn" data-tab="filters">
+                <i class="fas fa-magic"></i> Filters
+            </button>
             <button class="tab-btn" data-tab="info">
                 <i class="fas fa-info-circle"></i> Info
             </button>
@@ -176,6 +179,71 @@
                         
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-layer-group"></i> Merge Videos
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters Tab -->
+        <div class="tab-content" id="filters">
+            <div class="form-section">
+                <h3>Advanced Video Filters</h3>
+                
+                <!-- Thumbnail Generation -->
+                <div class="filter-section">
+                    <h4><i class="fas fa-image"></i> Generate Thumbnail</h4>
+                    <form id="thumbnailForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="thumbInputFile">Input File:</label>
+                                <select id="thumbInputFile" required>
+                                    <option value="">Select a video...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="thumbTimestamp">Timestamp (HH:MM:SS):</label>
+                                <input type="text" id="thumbTimestamp" placeholder="00:00:01" value="00:00:01">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-image"></i> Generate Thumbnail
+                        </button>
+                    </form>
+                    <div id="thumbnailPreview" class="thumbnail-preview"></div>
+                </div>
+
+                <!-- Video Filters -->
+                <div class="filter-section">
+                    <h4><i class="fas fa-magic"></i> Apply Video Filters</h4>
+                    <form id="filterForm">
+                        <div class="form-group">
+                            <label for="filterInputFile">Input File:</label>
+                            <select id="filterInputFile" required>
+                                <option value="">Select a video...</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="filterType">Filter Type:</label>
+                            <select id="filterType" required>
+                                <option value="">Select filter...</option>
+                                <option value="watermark">Text Watermark</option>
+                                <option value="blur">Blur Effect</option>
+                                <option value="brightness">Brightness Adjustment</option>
+                                <option value="contrast">Contrast Adjustment</option>
+                                <option value="saturation">Saturation Adjustment</option>
+                                <option value="speed">Speed Adjustment</option>
+                                <option value="stabilize">Video Stabilization</option>
+                                <option value="noise_reduction">Noise Reduction</option>
+                            </select>
+                        </div>
+
+                        <!-- Dynamic filter options -->
+                        <div id="filterOptions" class="filter-options"></div>
+
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-magic"></i> Apply Filter
                         </button>
                     </form>
                 </div>

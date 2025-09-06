@@ -89,6 +89,23 @@ class FFmpegClient {
         document.getElementById('refreshJobsBtn').addEventListener('click', () => {
             this.loadJobs();
         });
+
+        // Thumbnail form
+        document.getElementById('thumbnailForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.generateThumbnail();
+        });
+
+        // Filter form
+        document.getElementById('filterForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.applyFilter();
+        });
+
+        // Filter type change handler
+        document.getElementById('filterType').addEventListener('change', (e) => {
+            this.updateFilterOptions(e.target.value);
+        });
     }
 
     setupWebSocket() {
@@ -185,28 +202,32 @@ class FFmpegClient {
     }
 
     updateFileSelects(files) {
-        const selects = ['inputFileSelect', 'trimInputFile', 'infoFileSelect'];
+        const selects = ['inputFileSelect', 'trimInputFile', 'infoFileSelect', 'thumbInputFile', 'filterInputFile'];
         
         selects.forEach(selectId => {
             const select = document.getElementById(selectId);
-            select.innerHTML = '<option value="">Select a file...</option>';
-            
-            files.forEach(file => {
-                const option = document.createElement('option');
-                option.value = file.filename;
-                option.textContent = file.filename;
-                select.appendChild(option);
-            });
+            if (select) {
+                select.innerHTML = '<option value="">Select a file...</option>';
+                
+                files.forEach(file => {
+                    const option = document.createElement('option');
+                    option.value = file.filename;
+                    option.textContent = file.filename;
+                    select.appendChild(option);
+                });
+            }
         });
 
         // Update merge files list
         const mergeList = document.getElementById('mergeFilesList');
-        mergeList.innerHTML = files.map(file => `
-            <div class="checkbox-item">
-                <input type="checkbox" id="merge_${file.filename}" value="${file.filename}">
-                <label for="merge_${file.filename}">${file.filename}</label>
-            </div>
-        `).join('');
+        if (mergeList) {
+            mergeList.innerHTML = files.map(file => `
+                <div class="checkbox-item">
+                    <input type="checkbox" id="merge_${file.filename}" value="${file.filename}">
+                    <label for="merge_${file.filename}">${file.filename}</label>
+                </div>
+            `).join('');
+        }
     }
 
     async handleConvert() {
@@ -433,6 +454,243 @@ class FFmpegClient {
         setTimeout(() => {
             toast.remove();
         }, 5000);
+    }
+
+    async generateThumbnail() {
+        const filename = document.getElementById('thumbInputFile').value;
+        const timestamp = document.getElementById('thumbTimestamp').value || '00:00:01';
+        
+        if (!filename) {
+            this.showToast('Please select a file', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/thumbnail/${filename}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ timestamp })
+            });
+
+            const result = await response.json();
+            
+            if (response.ok) {
+                const preview = document.getElementById('thumbnailPreview');
+                preview.innerHTML = `
+                    <h4>Generated Thumbnail</h4>
+                    <img src="${result.thumbnailUrl}" alt="Video thumbnail" />
+                    <p>Thumbnail generated at ${timestamp}</p>
+                `;
+                this.showToast('Thumbnail generated successfully!', 'success');
+            } else {
+                this.showToast(`Failed to generate thumbnail: ${result.error}`, 'error');
+            }
+        } catch (error) {
+            this.showToast(`Failed to generate thumbnail: ${error.message}`, 'error');
+        }
+    }
+
+    updateFilterOptions(filterType) {
+        const optionsDiv = document.getElementById('filterOptions');
+        
+        if (!filterType) {
+            optionsDiv.innerHTML = '';
+            return;
+        }
+
+        let optionsHTML = '<h5>Filter Options</h5>';
+        
+        switch (filterType) {
+            case 'watermark':
+                optionsHTML += `
+                    <div class="form-group">
+                        <label for="watermarkText">Watermark Text:</label>
+                        <input type="text" id="watermarkText" placeholder="Enter watermark text" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="watermarkColor">Color:</label>
+                            <select id="watermarkColor">
+                                <option value="white">White</option>
+                                <option value="black">Black</option>
+                                <option value="red">Red</option>
+                                <option value="blue">Blue</option>
+                                <option value="green">Green</option>
+                                <option value="yellow">Yellow</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="watermarkSize">Font Size:</label>
+                            <input type="number" id="watermarkSize" value="24" min="12" max="72">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="watermarkX">X Position:</label>
+                            <input type="number" id="watermarkX" value="10" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="watermarkY">Y Position:</label>
+                            <input type="number" id="watermarkY" value="10" min="0">
+                        </div>
+                    </div>
+                `;
+                break;
+            
+            case 'blur':
+                optionsHTML += `
+                    <div class="form-group">
+                        <label for="blurIntensity">Blur Intensity:</label>
+                        <input type="range" id="blurIntensity" min="1" max="20" value="5">
+                        <span id="blurValue">5</span>
+                    </div>
+                `;
+                break;
+            
+            case 'brightness':
+                optionsHTML += `
+                    <div class="form-group">
+                        <label for="brightnessValue">Brightness (-1.0 to 1.0):</label>
+                        <input type="range" id="brightnessValue" min="-1" max="1" step="0.1" value="0.1">
+                        <span id="brightnessDisplay">0.1</span>
+                    </div>
+                `;
+                break;
+            
+            case 'contrast':
+                optionsHTML += `
+                    <div class="form-group">
+                        <label for="contrastValue">Contrast (0.0 to 3.0):</label>
+                        <input type="range" id="contrastValue" min="0" max="3" step="0.1" value="1.2">
+                        <span id="contrastDisplay">1.2</span>
+                    </div>
+                `;
+                break;
+            
+            case 'saturation':
+                optionsHTML += `
+                    <div class="form-group">
+                        <label for="saturationValue">Saturation (0.0 to 3.0):</label>
+                        <input type="range" id="saturationValue" min="0" max="3" step="0.1" value="1.5">
+                        <span id="saturationDisplay">1.5</span>
+                    </div>
+                `;
+                break;
+            
+            case 'speed':
+                optionsHTML += `
+                    <div class="form-group">
+                        <label for="speedValue">Speed Multiplier (0.25 to 4.0):</label>
+                        <input type="range" id="speedValue" min="0.25" max="4" step="0.25" value="2">
+                        <span id="speedDisplay">2.0x</span>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="adjustAudio" checked>
+                            Adjust audio speed accordingly
+                        </label>
+                    </div>
+                `;
+                break;
+            
+            case 'stabilize':
+                optionsHTML += `
+                    <p><i class="fas fa-info-circle"></i> Video stabilization will analyze and smooth camera movements. This process may take longer than other filters.</p>
+                `;
+                break;
+            
+            case 'noise_reduction':
+                optionsHTML += `
+                    <p><i class="fas fa-info-circle"></i> Noise reduction will remove visual noise and grain from the video, improving overall quality.</p>
+                `;
+                break;
+        }
+        
+        optionsDiv.innerHTML = optionsHTML;
+        
+        // Add event listeners for range inputs
+        const ranges = optionsDiv.querySelectorAll('input[type="range"]');
+        ranges.forEach(range => {
+            const displayId = range.id.replace('Value', 'Display').replace('Intensity', 'Value');
+            const display = document.getElementById(displayId);
+            if (display) {
+                range.addEventListener('input', () => {
+                    let value = range.value;
+                    if (range.id === 'speedValue') value += 'x';
+                    display.textContent = value;
+                });
+            }
+        });
+    }
+
+    async applyFilter() {
+        const inputFile = document.getElementById('filterInputFile').value;
+        const filterType = document.getElementById('filterType').value;
+        
+        if (!inputFile || !filterType) {
+            this.showToast('Please select a file and filter type', 'error');
+            return;
+        }
+
+        const options = {};
+        
+        // Collect filter-specific options
+        switch (filterType) {
+            case 'watermark':
+                const text = document.getElementById('watermarkText')?.value;
+                if (!text) {
+                    this.showToast('Please enter watermark text', 'error');
+                    return;
+                }
+                options.text = text;
+                options.color = document.getElementById('watermarkColor')?.value || 'white';
+                options.size = document.getElementById('watermarkSize')?.value || '24';
+                options.x = document.getElementById('watermarkX')?.value || '10';
+                options.y = document.getElementById('watermarkY')?.value || '10';
+                break;
+            
+            case 'blur':
+                options.intensity = document.getElementById('blurIntensity')?.value || '5';
+                break;
+            
+            case 'brightness':
+                options.value = document.getElementById('brightnessValue')?.value || '0.1';
+                break;
+            
+            case 'contrast':
+                options.value = document.getElementById('contrastValue')?.value || '1.2';
+                break;
+            
+            case 'saturation':
+                options.value = document.getElementById('saturationValue')?.value || '1.5';
+                break;
+            
+            case 'speed':
+                options.value = document.getElementById('speedValue')?.value || '2.0';
+                options.adjustAudio = document.getElementById('adjustAudio')?.checked !== false;
+                break;
+        }
+
+        try {
+            const response = await fetch('/api/filter', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ inputFile, filterType, options })
+            });
+
+            const result = await response.json();
+            
+            if (response.ok) {
+                this.currentJobId = result.jobId;
+                this.subscribeToJob(result.jobId);
+                this.showProgressModal();
+                this.showToast(`${filterType} filter started!`, 'success');
+            } else {
+                this.showToast(`Filter failed: ${result.error}`, 'error');
+            }
+        } catch (error) {
+            this.showToast(`Filter failed: ${error.message}`, 'error');
+        }
     }
 
     formatFileSize(bytes) {

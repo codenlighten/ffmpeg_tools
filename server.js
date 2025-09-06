@@ -111,6 +111,7 @@ const initializeDirectories = async () => {
   await ensureDirectoryExists('uploads');
   await ensureDirectoryExists('outputs');
   await ensureDirectoryExists('temp');
+  await ensureDirectoryExists('thumbnails');
 };
 
 // Routes
@@ -158,6 +159,55 @@ app.get('/api/info/:filename', async (req, res) => {
     res.json(mediaInfo);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Generate video thumbnail
+app.post('/api/thumbnail/:filename', async (req, res) => {
+  try {
+    const filename = req.params.filename;
+    const { timestamp = '00:00:01' } = req.body;
+    const inputPath = path.join('uploads', filename);
+    const thumbnailFilename = `thumb_${Date.now()}_${filename.replace(/\.[^/.]+$/, '')}.jpg`;
+    const thumbnailPath = path.join('thumbnails', thumbnailFilename);
+
+    // Check if input file exists
+    try {
+      await fs.access(inputPath);
+    } catch {
+      return res.status(404).json({ error: 'Input file not found' });
+    }
+
+    // Generate thumbnail
+    await new Promise((resolve, reject) => {
+      ffmpeg(inputPath)
+        .seekInput(timestamp)
+        .frames(1)
+        .size('320x240')
+        .output(thumbnailPath)
+        .on('end', resolve)
+        .on('error', reject)
+        .run();
+    });
+
+    res.json({ 
+      thumbnailFile: thumbnailFilename,
+      thumbnailUrl: `/api/thumbnail/view/${thumbnailFilename}`,
+      message: 'Thumbnail generated successfully' 
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Serve thumbnail images
+app.get('/api/thumbnail/view/:filename', async (req, res) => {
+  try {
+    const filePath = path.join('thumbnails', req.params.filename);
+    await fs.access(filePath);
+    res.sendFile(path.resolve(filePath));
+  } catch {
+    res.status(404).json({ error: 'Thumbnail not found' });
   }
 });
 
@@ -362,6 +412,115 @@ app.get('/api/download/:filename', async (req, res) => {
     res.download(filePath);
   } catch {
     res.status(404).json({ error: 'File not found' });
+  }
+});
+
+// Apply video filters
+app.post('/api/filter', async (req, res) => {
+  try {
+    const { inputFile, filterType, options = {} } = req.body;
+    
+    if (!inputFile || !filterType) {
+      return res.status(400).json({ error: 'inputFile and filterType are required' });
+    }
+
+    const jobId = uuidv4();
+    const inputPath = path.join('uploads', inputFile);
+    const outputFilename = `filtered_${filterType}_${jobId}_${inputFile}`;
+    const outputPath = path.join('outputs', outputFilename);
+
+    // Check if input file exists
+    try {
+      await fs.access(inputPath);
+    } catch {
+      return res.status(404).json({ error: 'Input file not found' });
+    }
+
+    const job = {
+      id: jobId,
+      status: 'processing',
+      inputFile,
+      outputFile: outputFilename,
+      filterType,
+      startTime: new Date().toISOString(),
+      progress: 0
+    };
+
+    activeJobs.set(jobId, job);
+
+    let command = ffmpeg(inputPath).output(outputPath);
+
+    // Apply different filters based on type
+    switch (filterType) {
+      case 'watermark':
+        if (options.text) {
+          command = command.videoFilters([
+            `drawtext=text='${options.text}':fontcolor=${options.color || 'white'}:fontsize=${options.size || '24'}:x=${options.x || '10'}:y=${options.y || '10'}`
+          ]);
+        }
+        break;
+      
+      case 'blur':
+        command = command.videoFilters([`boxblur=${options.intensity || '5:1'}`]);
+        break;
+      
+      case 'brightness':
+        const brightness = options.value || '0.1';
+        command = command.videoFilters([`eq=brightness=${brightness}`]);
+        break;
+      
+      case 'contrast':
+        const contrast = options.value || '1.2';
+        command = command.videoFilters([`eq=contrast=${contrast}`]);
+        break;
+      
+      case 'saturation':
+        const saturation = options.value || '1.5';
+        command = command.videoFilters([`eq=saturation=${saturation}`]);
+        break;
+      
+      case 'speed':
+        const speed = options.value || '2.0';
+        command = command.videoFilters([`setpts=PTS/${speed}`]);
+        if (options.adjustAudio !== false) {
+          command = command.audioFilters([`atempo=${speed}`]);
+        }
+        break;
+      
+      case 'stabilize':
+        command = command.videoFilters(['vidstabdetect=shakiness=10:accuracy=15', 'vidstabtransform=smoothing=30']);
+        break;
+      
+      case 'noise_reduction':
+        command = command.videoFilters(['hqdn3d=4:3:6:4.5']);
+        break;
+      
+      default:
+        return res.status(400).json({ error: 'Unsupported filter type' });
+    }
+
+    command
+      .on('progress', (progress) => {
+        job.progress = Math.round(progress.percent || 0);
+        broadcastProgress(jobId, job.progress);
+      })
+      .on('end', () => {
+        job.status = 'completed';
+        job.endTime = new Date().toISOString();
+        job.progress = 100;
+        broadcastProgress(jobId, 100);
+      })
+      .on('error', (err) => {
+        job.status = 'failed';
+        job.error = err.message;
+        job.endTime = new Date().toISOString();
+        console.error('Filter error:', err);
+      })
+      .run();
+
+    res.json({ jobId, message: `${filterType} filter started` });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
