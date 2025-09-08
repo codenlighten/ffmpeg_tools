@@ -40,7 +40,7 @@
             <div class="upload-area" id="uploadArea">
                 <i class="fas fa-cloud-upload-alt"></i>
                 <h3>Drop files here or click to browse</h3>
-                <p>Supported formats: MP4, AVI, MOV, WMV, FLV, WebM, MKV, MP3, WAV, AAC, FLAC, OGG</p>
+                <p>Supported formats: MP4, AVI, MOV, WMV, FLV, WebM, MKV, GIF, MP3, WAV, AAC, FLAC, OGG</p>
                 <input type="file" id="fileInput" accept="video/*,audio/*" multiple hidden>
             </div>
             
@@ -57,20 +57,21 @@
                 <form id="convertForm">
                     <div class="form-group">
                         <label for="inputFileSelect">Input File:</label>
-                        <select id="inputFileSelect" required>
+                        <select id="inputFileSelect" name="inputFileSelect" required>
                             <option value="">Select a file...</option>
                         </select>
                     </div>
                     
                     <div class="form-group">
                         <label for="outputFormat">Output Format:</label>
-                        <select id="outputFormat" required>
+                        <select id="outputFormat" name="outputFormat" required>
                             <option value="">Select format...</option>
                             <option value="mp4">MP4</option>
                             <option value="avi">AVI</option>
                             <option value="mov">MOV</option>
                             <option value="webm">WebM</option>
                             <option value="mkv">MKV</option>
+                            <option value="gif">GIF</option>
                             <option value="mp3">MP3</option>
                             <option value="wav">WAV</option>
                             <option value="aac">AAC</option>
@@ -81,7 +82,7 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="videoCodec">Video Codec:</label>
-                            <select id="videoCodec">
+                            <select id="videoCodec" name="videoCodec">
                                 <option value="">Auto</option>
                                 <option value="libx264">H.264</option>
                                 <option value="libx265">H.265</option>
@@ -92,7 +93,7 @@
                         
                         <div class="form-group">
                             <label for="audioCodec">Audio Codec:</label>
-                            <select id="audioCodec">
+                            <select id="audioCodec" name="audioCodec">
                                 <option value="">Auto</option>
                                 <option value="aac">AAC</option>
                                 <option value="mp3">MP3</option>
@@ -105,18 +106,18 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="videoBitrate">Video Bitrate:</label>
-                            <input type="text" id="videoBitrate" placeholder="e.g., 1000k">
+                            <input type="text" id="videoBitrate" name="videoBitrate" placeholder="e.g., 1000k">
                         </div>
                         
                         <div class="form-group">
                             <label for="audioBitrate">Audio Bitrate:</label>
-                            <input type="text" id="audioBitrate" placeholder="e.g., 128k">
+                            <input type="text" id="audioBitrate" name="audioBitrate" placeholder="e.g., 128k">
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label for="resolution">Resolution:</label>
-                        <select id="resolution">
+                        <select id="resolution" name="resolution">
                             <option value="">Keep original</option>
                             <option value="1920x1080">1920x1080 (1080p)</option>
                             <option value="1280x720">1280x720 (720p)</option>
@@ -143,7 +144,7 @@
                     <form id="trimForm">
                         <div class="form-group">
                             <label for="trimInputFile">Input File:</label>
-                            <select id="trimInputFile" required>
+                            <select id="trimInputFile" name="trimInputFile" required>
                                 <option value="">Select a file...</option>
                             </select>
                         </div>
@@ -151,12 +152,12 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="startTime">Start Time (HH:MM:SS):</label>
-                                <input type="text" id="startTime" placeholder="00:00:30" required>
+                                <input type="text" id="startTime" name="startTime" placeholder="00:00:30" required>
                             </div>
                             
                             <div class="form-group">
                                 <label for="duration">Duration (HH:MM:SS):</label>
-                                <input type="text" id="duration" placeholder="00:01:00" required>
+                                <input type="text" id="duration" name="duration" placeholder="00:01:00" required>
                             </div>
                         </div>
                         
@@ -197,13 +198,13 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="thumbInputFile">Input File:</label>
-                                <select id="thumbInputFile" required>
+                                <select id="thumbInputFile" name="thumbInputFile" required>
                                     <option value="">Select a video...</option>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label for="thumbTimestamp">Timestamp (HH:MM:SS):</label>
-                                <input type="text" id="thumbTimestamp" placeholder="00:00:01" value="00:00:01">
+                                <input type="text" id="thumbTimestamp" name="thumbTimestamp" placeholder="00:00:01" value="00:00:01">
                             </div>
                         </div>
                         <button type="submit" class="btn btn-primary">
@@ -219,14 +220,14 @@
                     <form id="filterForm">
                         <div class="form-group">
                             <label for="filterInputFile">Input File:</label>
-                            <select id="filterInputFile" required>
+                            <select id="filterInputFile" name="filterInputFile" required>
                                 <option value="">Select a video...</option>
                             </select>
                         </div>
                         
                         <div class="form-group">
                             <label for="filterType">Filter Type:</label>
-                            <select id="filterType" required>
+                            <select id="filterType" name="filterType" required>
                                 <option value="">Select filter...</option>
                                 <option value="watermark">Text Watermark</option>
                                 <option value="blur">Blur Effect</option>
@@ -256,7 +257,7 @@
                 <h3>Media Information</h3>
                 <div class="form-group">
                     <label for="infoFileSelect">Select File:</label>
-                    <select id="infoFileSelect">
+                    <select id="infoFileSelect" name="infoFileSelect">
                         <option value="">Select a file...</option>
                     </select>
                 </div>

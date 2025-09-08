@@ -6,7 +6,7 @@ A comprehensive set of FFmpeg server tools for media processing with a modern we
 
 ### Core Functionality
 - **File Upload**: Drag & drop or browse to upload video/audio files
-- **Media Conversion**: Convert between various formats (MP4, AVI, MOV, WebM, MKV, MP3, WAV, AAC, FLAC, etc.)
+- **Media Conversion**: Convert between various formats (MP4, AVI, MOV, WebM, MKV, GIF, MP3, WAV, AAC, FLAC, etc.)
 - **Video Editing**: Trim videos and merge multiple files
 - **Media Information**: Extract detailed metadata from media files
 - **Real-time Progress**: WebSocket-based progress tracking for long-running operations
@@ -128,6 +128,20 @@ curl -X POST \
 curl http://localhost:3000/api/info/video.mp4
 ```
 
+#### Convert video to GIF
+```bash
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{
+    "inputFile": "video.mp4",
+    "outputFormat": "gif",
+    "options": {
+      "resolution": "320x240"
+    }
+  }' \
+  http://localhost:3000/api/convert
+```
+
 ## Configuration
 
 ### Environment Variables
@@ -136,7 +150,12 @@ curl http://localhost:3000/api/info/video.mp4
 
 ### File Limits
 - Maximum file size: 500MB (configurable in server.js)
-- Supported formats: MP4, AVI, MOV, WMV, FLV, WebM, MKV, MP3, WAV, AAC, FLAC, OGG
+- Supported formats: MP4, AVI, MOV, WMV, FLV, WebM, MKV, GIF, MP3, WAV, AAC, FLAC, OGG
+
+### GIF Conversion
+- Automatically optimized for smaller file sizes (10fps, 320px width)
+- Best for short video clips (recommended: under 30 seconds)
+- Use lower resolutions for faster processing and smaller files
 
 ### Cleanup Schedule
 - Old files are automatically cleaned up daily at midnight
@@ -159,26 +178,13 @@ ffmpeg-server-tools/
 
 ## WebSocket Connection
 
-The server provides real-time progress updates via WebSocket on port 8080:
+The server provides real-time progress updates via WebSocket on the same port as the HTTP server:
 
 ```javascript
-const ws = new WebSocket('ws://localhost:8080');
-
-ws.onopen = () => {
-  // Subscribe to job updates
-  ws.send(JSON.stringify({
-    type: 'subscribe',
-    jobId: 'your-job-id'
-  }));
-};
-
-ws.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  if (data.type === 'progress') {
-    console.log(`Job ${data.jobId}: ${data.progress}%`);
-  }
-};
-```
+// WebSocket automatically connects to the same host and port as the web page
+const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+const wsUrl = `${protocol}//${window.location.host}`;
+const ws = new WebSocket(wsUrl);
 
 ## Security Features
 
@@ -222,8 +228,9 @@ This starts the server with nodemon for automatic restarts on file changes.
    - Verify file format is supported
 
 3. **WebSocket connection fails**
-   - Ensure port 8080 is available
-   - Check firewall settings
+   - WebSocket runs on the same port as HTTP server (port 3000)
+   - Check Content Security Policy if using custom deployment
+   - Ensure WebSocket protocol matches (ws:// for HTTP, wss:// for HTTPS)
 
 4. **Processing jobs fail**
    - Check server logs for detailed error messages

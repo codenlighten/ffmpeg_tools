@@ -16,10 +16,10 @@ RUN npm ci --only=production
 COPY . .
 
 # Create necessary directories
-RUN mkdir -p uploads outputs temp
+RUN mkdir -p uploads outputs temp thumbnails
 
 # Expose ports
-EXPOSE 3000 8081
+EXPOSE 3000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \

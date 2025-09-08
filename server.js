@@ -14,7 +14,18 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
+      fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
+      connectSrc: ["'self'", "ws:", "wss:"],
+      imgSrc: ["'self'", "data:", "blob:"],
+    },
+  },
+}));
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
@@ -43,7 +54,7 @@ const upload = multer({
     fileSize: 500 * 1024 * 1024 // 500MB limit
   },
   fileFilter: (req, file, cb) => {
-    const allowedTypes = /\.(mp4|avi|mov|wmv|flv|webm|mkv|mp3|wav|aac|flac|ogg)$/i;
+    const allowedTypes = /\.(mp4|avi|mov|wmv|flv|webm|mkv|gif|mp3|wav|aac|flac|ogg)$/i;
     if (allowedTypes.test(file.originalname)) {
       cb(null, true);
     } else {
@@ -52,26 +63,8 @@ const upload = multer({
   }
 });
 
-// WebSocket server for real-time progress updates
-const WS_PORT = process.env.WS_PORT || 8081;
-const wss = new WebSocket.Server({ port: WS_PORT });
+// WebSocket server for real-time progress updates  
 const activeConnections = new Map();
-
-wss.on('connection', (ws) => {
-  const connectionId = uuidv4();
-  activeConnections.set(connectionId, ws);
-  
-  ws.on('message', (message) => {
-    const data = JSON.parse(message);
-    if (data.type === 'subscribe' && data.jobId) {
-      ws.jobId = data.jobId;
-    }
-  });
-  
-  ws.on('close', () => {
-    activeConnections.delete(connectionId);
-  });
-});
 
 // Job tracking
 const activeJobs = new Map();
@@ -247,6 +240,15 @@ app.post('/api/convert', async (req, res) => {
     const command = ffmpeg(inputPath)
       .output(outputPath)
       .format(outputFormat);
+
+    // GIF-specific optimizations
+    if (outputFormat === 'gif') {
+      // Optimize GIF quality and size
+      command.videoFilters([
+        'fps=10', // Reduce frame rate for smaller file size
+        'scale=320:-1:flags=lanczos' // Scale down and use lanczos for better quality
+      ]);
+    }
 
     // Apply options
     if (options.videoBitrate) command.videoBitrate(options.videoBitrate);
@@ -592,10 +594,29 @@ app.use((error, req, res, next) => {
 const startServer = async () => {
   await initializeDirectories();
   
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`FFmpeg Server Tools running on port ${PORT}`);
-    console.log(`WebSocket server running on port ${WS_PORT}`);
+    console.log(`WebSocket server running on same port ${PORT}`);
     console.log(`API Documentation available at http://localhost:${PORT}`);
+  });
+
+  // Create WebSocket server on the same HTTP server
+  const wss = new WebSocket.Server({ server });
+
+  wss.on('connection', (ws) => {
+    const connectionId = require('uuid').v4();
+    activeConnections.set(connectionId, ws);
+    
+    ws.on('message', (message) => {
+      const data = JSON.parse(message);
+      if (data.type === 'subscribe' && data.jobId) {
+        ws.jobId = data.jobId;
+      }
+    });
+    
+    ws.on('close', () => {
+      activeConnections.delete(connectionId);
+    });
   });
 };
 

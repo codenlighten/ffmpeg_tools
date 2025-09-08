@@ -10,6 +10,7 @@ class FFmpegClient {
         this.setupUpload();
         this.setupForms();
         this.setupWebSocket();
+        this.setupEventDelegation();
         this.loadFiles();
         this.loadJobs();
     }
@@ -110,7 +111,13 @@ class FFmpegClient {
 
     setupWebSocket() {
         try {
-            this.ws = new WebSocket('ws://localhost:8081');
+            // Use same port as the current page for WebSocket
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const host = window.location.host; // includes port if any
+            const wsUrl = `${protocol}//${host}`;
+            
+            console.log('Attempting WebSocket connection to:', wsUrl);
+            this.ws = new WebSocket(wsUrl);
             
             this.ws.onopen = () => {
                 console.log('WebSocket connected');
@@ -131,6 +138,18 @@ class FFmpegClient {
         } catch (error) {
             console.error('WebSocket connection failed:', error);
         }
+    }
+
+    setupEventDelegation() {
+        // Handle download button clicks using event delegation
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.download-btn')) {
+                const btn = e.target.closest('.download-btn');
+                const filename = btn.dataset.filename;
+                const isOutput = btn.dataset.isOutput === 'true';
+                this.downloadFile(filename, isOutput);
+            }
+        });
     }
 
     async handleFiles(files) {
@@ -193,7 +212,7 @@ class FFmpegClient {
                     </div>
                 </div>
                 <div class="file-actions">
-                    <button class="btn btn-secondary" onclick="client.downloadFile('${file.filename}')">
+                    <button class="btn btn-secondary download-btn" data-filename="${file.filename}" data-is-output="false">
                         <i class="fas fa-download"></i>
                     </button>
                 </div>
@@ -396,7 +415,7 @@ class FFmpegClient {
                 </div>
                 
                 ${job.status === 'completed' && job.outputFile ? `
-                    <button class="btn btn-primary" onclick="client.downloadFile('${job.outputFile}', true)">
+                    <button class="btn btn-primary download-btn" data-filename="${job.outputFile}" data-is-output="true">
                         <i class="fas fa-download"></i> Download Result
                     </button>
                 ` : ''}

@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+
+# Runtime data
+uploads/*
+outputs/*
+temp/*
+thumbnails/*
+
+# Keep the directory structure but ignore contents
+!uploads/.gitkeep
+!outputs/.gitkeep
+!temp/.gitkeep
+!thumbnails/.gitkeep
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# Test files
+test_*
+*.test.js
+
+# Development
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
